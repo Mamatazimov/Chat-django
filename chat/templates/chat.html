@@ -1,25 +1,53 @@
 <!DOCTYPE html>
 <html>
 <head><title>Chat</title></head>
+<style>
+    body {
+        background-color: cornflowerblue;
+        center
+    }
+    #chat-log,#chat-message-input,#chat-message-submit{
+        display:block;
+        margin: auto;
+        width: 80%;
+        margin-top: 1rem;
+
+    }
+    #chat-log{
+        resize: none;
+        border-radius: 1rem;
+    }
+    #chat-message-input,#chat-message-submit{
+        border-radius: 1rem;
+        padding: 1rem 0;
+    }
+
+</style>
 <body>
-    <textarea id="chat-log" cols="100" rows="20"></textarea><br/>
-    <input id="chat-message-input" type="text" size="100"><br/>
+    <h2 style="text-align: center">Room name: {{ room_name }}</h2>
+    <textarea id="chat-log" cols="100" rows="20" disabled></textarea>
+    <input id="chat-message-input" type="text" size="100">
     <input id="chat-message-submit" type="button" value="Send">
     <script>
-        const roomName = "test";
+        const id = crypto.randomUUID()
+        localStorage.setItem("id",id);
+        const roomName = {% if room_name %}"{{ room_name }}"{% else %} "test" {% endif %};
         const chatSocket = new WebSocket(
             'ws://' + window.location.host + '/ws/chat/' + roomName + '/'
         );
 
         chatSocket.onmessage = function(e) {
             const data = JSON.parse(e.data);
+            if(data.id === id){
+                data.message = "me:"+data.message
+            }
             document.querySelector('#chat-log').value += (data.message + '\n');
         };
 
         document.querySelector('#chat-message-submit').onclick = function(e) {
             const messageInputDom = document.querySelector('#chat-message-input');
             const message = messageInputDom.value;
-            chatSocket.send(JSON.stringify({'message': message}));
+            chatSocket.send(JSON.stringify({'message': message,"id":id}));
             messageInputDom.value = '';
         };
     </script>
